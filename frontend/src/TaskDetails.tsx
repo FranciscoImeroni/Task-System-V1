@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import type { Task } from "./types"; // Changed to type-only import
+import type { Task } from "./types"; 
+import type { Subtask } from "./types"; 
 
 interface TaskDetailsProps {
   task: Task;
@@ -15,7 +16,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onUpdate, onDelete, onB
   const [priority, setPriority] = useState(task.priority);
   const [status, setStatus] = useState(task.status);
   const [estimate, setEstimate] = useState(task.estimate ? String(task.estimate) : "");
-  const [subtasks, setSubtasks] = useState(task.subtasks || []);
+  const [subtasks, setSubtasks] = useState<Subtask[]>(task.subtasks || []);
 
   const handleSave = () => {
     onUpdate({
@@ -26,19 +27,29 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onUpdate, onDelete, onB
       status,
       estimate: estimate ? Number(estimate) : undefined,
       updatedAt: new Date().toISOString(),
-      subtasks,
+      subtasks, 
     });
     setEditMode(false);
   };
 
   const handleAddSubtask = () => {
-    setSubtasks([...subtasks, { title: "", estimate: 0 }]);
+    const newSubtask: Subtask = {
+      title: "", 
+      estimate: 0, 
+    };
+    setSubtasks([...subtasks, newSubtask]);
   };
 
-  const handleSubtaskChange = (idx: number, field: string, value: string) => {
-    setSubtasks(subtasks.map((st, i) =>
-      i === idx ? { ...st, [field]: field === "estimate" ? Number(value) : value } : st
-    ));
+  const handleSubtaskChange = (idx: number, field: keyof Subtask, value: string | number) => {
+    setSubtasks(subtasks.map((st, i) => {
+      if (i === idx) {
+        if (field === "estimate") {
+          return { ...st, [field]: Number(value) };
+        }
+        return { ...st, [field]: value as string }; 
+      }
+      return st;
+    }));
   };
 
   const handleDeleteSubtask = (idx: number) => {

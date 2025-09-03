@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class TaskService {
-  private tasks: Task[] = [];
+  private tasks: Task[] = []; 
 
   create(task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Task {
     const now = new Date().toISOString();
@@ -13,7 +13,7 @@ export class TaskService {
       id: uuidv4(),
       createdAt: now,
       updatedAt: now,
-      subtasks: task.subtasks || [],
+      subtasks: task.subtasks || [], 
     };
     this.tasks.push(newTask);
     return newTask;
@@ -48,7 +48,7 @@ export class TaskService {
     this.tasks.splice(idx, 1);
   }
 
-  // Estimate calculations
+  // Cálculo de estimaciones para subtareas anidadas
   sumEstimates(tasks: Task[], statuses?: TaskStatus[]): number {
     return tasks.reduce((sum, t) => {
       const subSum = t.subtasks ? this.sumEstimates(t.subtasks, statuses) : 0;

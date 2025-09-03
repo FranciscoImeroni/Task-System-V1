@@ -10,5 +10,5 @@ export class Task {
   estimate?: number;
   createdAt: string;
   updatedAt: string;
-  subtasks?: Task[];
+  subtasks?: Task[]; 
 }
