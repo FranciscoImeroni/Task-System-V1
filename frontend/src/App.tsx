@@ -1,122 +1,175 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; 
 import { Routes, Route, useNavigate } from "react-router-dom";
-import TaskDetails from "./TaskDetails";
+import TaskDetails from "./TaskDetails/TaskDetails";
+import TaskList from "./TaskList/TaskList";
+import TaskForm from "./TaskForm/TaskForm"; 
 import "./App.css";
+import type { Task } from "./types"; 
 
-export interface Task {
-  id: string;
-  title: string;
-  description: string;
-  priority: string;
-  status: string;
-  estimate?: number;
-  createdAt: string;
-  updatedAt: string;
-  subtasks: { title: string; estimate: number }[];
-}
-
-const initialTasks: Task[] = [];
-
-function TaskList({ tasks, onDetails }: { tasks: Task[]; onDetails: (id: string) => void }) {
-  return (
-    <div className="task-list">
-      <h2>Tasks</h2>
-      <ul>
-        {tasks.map(task => (
-          <li key={task.id} className="task-item">
-            <div>
-              <strong>{task.title}</strong> <span>({task.priority})</span>
-            </div>
-            <button onClick={() => onDetails(task.id)}>Details</button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+// Elimina los datos mock initialTasks
+// const initialTasks: Task[] = [
+//   {
+//     id: "1",
+//     title: "Design homepage",
+//     description: "Design the main homepage layout and hero section.",
+//     status: "In Progress",
+//     priority: "High",
+//     estimate: 4,
+//     createdAt: "2024-06-01T00:00:00.000Z",
+//     updatedAt: "2024-06-01T00:00:00.000Z",
+//     subtasks: [],
+//   },
+//   {
+//     id: "2",
+//     title: "Setup backend API",
+//     description: "Initialize backend project and create basic endpoints.",
+//     status: "Backlog",
+//     priority: "Medium",
+//     estimate: 6,
+//     createdAt: "2024-06-02T00:00:00.000Z",
+//     updatedAt: "2024-06-02T00:00:00.000Z",
+//     subtasks: [],
+//   },
+//   {
+//     id: "3",
+//     title: "Write documentation",
+//     description: "Document the API and frontend usage.",
+//     status: "Completed",
+//     priority: "Low",
+//     estimate: 2,
+//     createdAt: "2024-06-03T00:00:00.000Z",
+//     updatedAt: "2024-06-03T00:00:00.000Z",
+//     subtasks: [],
+//   },
+// ];
 
 function App() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<string>("");
   const [estimate, setEstimate] = useState<string>("");
   const navigate = useNavigate();
 
-  const handleCreateTask = (e: React.FormEvent) => {
+  const API_BASE_URL = "http://localhost:3000";
+
+  const fetchTasks = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/tasks`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data: Task[] = await response.json();
+      setTasks(data);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    const now = new Date().toISOString();
-    setTasks([
-      ...tasks,
-      {
-        id: Math.random().toString(36).substr(2, 9),
-        title,
-        description,
-        priority: priority as Task["priority"],
-        status: "Backlog",
-        estimate: estimate ? Number(estimate) : undefined,
-        createdAt: now,
-        updatedAt: now,
-        subtasks: [],
-      },
-    ]);
-    setTitle("");
-    setDescription("");
-    setPriority("");
-    setEstimate("");
+
+    const newTaskData = {
+      title,
+      description,
+      priority: priority as Task["priority"],
+      status: "Backlog",
+      estimate: estimate ? Number(estimate) : undefined,
+      subtasks: [],
+    };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/tasks`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newTaskData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const createdTask: Task = await response.json();
+      setTasks((prevTasks) => [...prevTasks, createdTask]);
+      setTitle("");
+      setDescription("");
+      setPriority("");
+      setEstimate("");
+    } catch (error) {
+      console.error("Error creating task:", error);
+    }
   };
 
-  const handleUpdateTask = (updated: Task) => {
-    setTasks(tasks => tasks.map(t => (t.id === updated.id ? updated : t)));
+  const handleUpdateTask = async (updatedTask: Task) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/tasks/${updatedTask.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedTask),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: Task = await response.json();
+      setTasks((prevTasks) =>
+        prevTasks.map((t) => (t.id === data.id ? data : t))
+      );
+    } catch (error) {
+      console.error("Error updating task:", error);
+    }
   };
 
-  const handleDeleteTask = (id: string) => {
-    setTasks(tasks => tasks.filter(t => t.id !== id));
-    navigate("/");
+  const handleDeleteTask = async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      setTasks((prevTasks) => prevTasks.filter((t) => t.id !== id));
+      navigate("/");
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
   };
 
   return (
-    <div className="container">
+    <div className="app">
       <h1>Task Management System</h1>
       <Routes>
         <Route
           path="/"
           element={
             <>
-              <form className="task-form" onSubmit={handleCreateTask}>
-                <input
-                  type="text"
-                  placeholder="Title"
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  required
-                />
-                <textarea
-                  placeholder="Description"
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                />
-                <select
-                  value={priority}
-                  onChange={e => setPriority(e.target.value)}
-                >
-                  <option value="">Priority (optional)</option>
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                  <option value="Urgent">Urgent</option>
-                </select>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="Estimate (optional)"
-                  value={estimate}
-                  onChange={e => setEstimate(e.target.value)}
-                />
-                <button type="submit">Create Task</button>
-              </form>
-              <TaskList tasks={tasks} onDetails={id => navigate(`/task/${id}`)} />
+              <TaskForm 
+                title={title}
+                setTitle={setTitle}
+                description={description}
+                setDescription={setDescription}
+                priority={priority}
+                setPriority={setPriority}
+                estimate={estimate}
+                setEstimate={setEstimate}
+                handleCreateTask={handleCreateTask}
+              />
+              <TaskList
+                tasks={tasks}
+                onDetails={(id) => navigate(`/task/${id}`)}
+              />
             </>
           }
         />
@@ -124,7 +177,7 @@ function App() {
           path="/task/:id"
           element={
             <TaskDetails
-              task={tasks.find(t => t.id === window.location.pathname.split("/").pop())!}
+              task={tasks.find((t) => t.id === window.location.pathname.split("/").pop())!}
               onUpdate={handleUpdateTask}
               onDelete={handleDeleteTask}
               onBack={() => navigate("/")}
@@ -136,4 +189,4 @@ function App() {
   );
 }
 
-export default App
+export default App;

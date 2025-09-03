@@ -1,6 +1,8 @@
 export interface Subtask {
   title: string;
   estimate: number;
+  status: "Backlog" | "Unstarted" | "Started" | "Completed";
+  subtasks?: Subtask[];
 }
 
 export interface Task {
@@ -9,7 +11,7 @@ export interface Task {
   description: string;
   priority: "Low" | "Medium" | "High" | "Urgent";
   status: "Backlog" | "In Progress" | "Completed";
-  estimate?: number; // Optional, as it's handled as string and converted to number
+  estimate?: number;
   createdAt: string;
   updatedAt: string;
   subtasks?: Subtask[];

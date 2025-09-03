@@ -1,0 +1,99 @@
+.task-details {
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin: 2rem auto;
+  max-width: 800px;
+}
+
+.task-details h2 {
+  color: #d8d8d8;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.task-details p {
+  margin-bottom: 0.5rem;
+  color: #d8d7d7;
+}
+
+.task-details h4 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.8rem;
+  color: #c5c2c2;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.task-details ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.task-details ul li {
+  background-color: #eef;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.task-details button {
+  background-color: #1b1b1b;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-right: 10px;
+  margin-top: 1rem;
+}
+
+.task-details button:hover {
+  background-color: #303030;
+}
+
+.task-details button:last-child {
+  margin-right: 0;
+}
+
+.task-details input[type="text"],
+.task-details textarea,
+.task-details select,
+.task-details input[type="number"] {
+  width: calc(100% - 22px); 
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.task-details textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.task-details .subtask-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.task-details .subtask-item input {
+  flex-grow: 1;
+  margin-bottom: 0; 
+}
+
+.task-details .subtask-item button {
+  margin-top: 0; 
+  margin-right: 0;
+  background-color: #2b2b2b; 
+}
+
+.task-details .subtask-item button:hover {
+  background-color: #302f30;
+}
