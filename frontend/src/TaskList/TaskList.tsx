@@ -26,7 +26,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onDetails }) => {
         <tbody>
           {tasks.map((task) => (
             <tr key={task.id}> 
-              <td>{task.id}</td>
+              <td>{task.displayId}</td>
               <td>{task.title}</td>
               <td>{task.status}</td>
               <td>{task.priority}</td>

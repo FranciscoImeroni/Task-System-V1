@@ -7,48 +7,50 @@ interface TaskDetailsProps {
   task: Task;
   onUpdate: (task: Task) => void;
   onDelete: (id: string) => void;
-  onBack: () => void;
+  onBack: () => void; // Changed from onClose to onBack
 }
 
-const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onUpdate, onDelete, onBack }) => {
+const TaskDetails: React.FC<TaskDetailsProps> = ({
+  task,
+  onUpdate,
+  onDelete,
+  onBack, // Destructure onBack
+}) => {
   const [editMode, setEditMode] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [priority, setPriority] = useState(task.priority);
   const [status, setStatus] = useState(task.status);
-  const [estimate, setEstimate] = useState(task.estimate ? String(task.estimate) : "");
-  const [subtasks, setSubtasks] = useState<Subtask[]>(
-    task.subtasks?.map(st => ({ ...st, status: st.status || "Backlog" })) || []
-  );
-  const [pendingSubtaskEstimate, setPendingSubtaskEstimate] = useState(0);
-  const [startedSubtaskEstimate, setStartedSubtaskEstimate] = useState(0);
-  const [totalSubtaskEstimate, setTotalSubtaskEstimate] = useState(0);
+  const [estimate, setEstimate] = useState<string>(task.estimate?.toString() || "");
+  const [subtasks, setSubtasks] = useState<Subtask[]>(task.subtasks || []);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+  const [newSubtaskEstimate, setNewSubtaskEstimate] = useState("");
+  const [subtaskEstimates, setSubtaskEstimates] = useState({ pending: 0, started: 0, total: 0 });
 
   const API_BASE_URL = "http://localhost:3000";
 
-  const fetchSubtaskEstimates = async () => {
-    if (!task || !task.id) return;
+  useEffect(() => {
+    setTitle(task.title);
+    setDescription(task.description);
+    setPriority(task.priority);
+    setStatus(task.status);
+    setEstimate(task.estimate?.toString() || "");
+    setSubtasks(task.subtasks || []);
+    fetchSubtaskEstimates();
+  }, [task]);
 
+  const fetchSubtaskEstimates = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/tasks/${task.id}/estimates`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setPendingSubtaskEstimate(data.pending);
-      setStartedSubtaskEstimate(data.started);
-      setTotalSubtaskEstimate(data.total);
+      setSubtaskEstimates(data);
     } catch (error) {
       console.error("Error fetching subtask estimates:", error);
-      setPendingSubtaskEstimate(0);
-      setStartedSubtaskEstimate(0);
-      setTotalSubtaskEstimate(0);
     }
   };
-
-  useEffect(() => {
-    fetchSubtaskEstimates(); 
-  }, [task.id]); 
 
   const handleSave = () => {
     onUpdate({
@@ -65,93 +67,148 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onUpdate, onDelete, onB
     fetchSubtaskEstimates();
   };
 
+  const handleDelete = () => {
+    if (window.confirm("Are you sure you want to delete this task?")) {
+      onDelete(task.id);
+      onBack(); // Call onBack
+    }
+  };
+
   const handleAddSubtask = () => {
-    const newSubtask: Subtask = {
-      title: "",
-      estimate: 0,
-      status: "Backlog", 
-    };
-    setSubtasks([...subtasks, newSubtask]);
+    if (newSubtaskTitle && newSubtaskEstimate) {
+      const newSubtask: Subtask = {
+        title: newSubtaskTitle,
+        estimate: Number(newSubtaskEstimate),
+        status: "Unstarted",
+        subtasks: [],
+      };
+      setSubtasks([...subtasks, newSubtask]);
+      setNewSubtaskTitle("");
+      setNewSubtaskEstimate("");
+    }
   };
 
-  const handleSubtaskChange = (idx: number, field: keyof Subtask, value: string | number) => {
-    setSubtasks(subtasks.map((st, i) => {
-      if (i === idx) {
-        if (field === "estimate") {
-          return { ...st, [field]: Number(value) };
-        }
-        if (field === "status") {
-          return { ...st, [field]: value as Subtask["status"] };
-        }
-        return { ...st, [field]: value as string };
-      }
-      return st;
-    }));
+  const handleSubtaskStatusChange = (index: number, newStatus: Subtask["status"]) => {
+    const updatedSubtasks = [...subtasks];
+    updatedSubtasks[index].status = newStatus;
+    setSubtasks(updatedSubtasks);
   };
 
-  const handleDeleteSubtask = (idx: number) => {
-    setSubtasks(subtasks.filter((_, i) => i !== idx));
+  const handleSubtaskDelete = (index: number) => {
+    const updatedSubtasks = subtasks.filter((_, i) => i !== index);
+    setSubtasks(updatedSubtasks);
   };
 
   return (
     <div className="task-details">
-      <button onClick={onBack}>Back</button>
+      <button className="close-button" onClick={onBack}> {/* Call onBack */}
+        &times;
+      </button>
       {editMode ? (
-        <div>
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" />
-          <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Description" />
-          <select value={priority} onChange={e => setPriority(e.target.value as Task['priority'])}>
-            <option value="">Priority</option>
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-            <option value="Urgent">Urgent</option>
-          </select>
-          <select value={status} onChange={e => setStatus(e.target.value as Task['status'])}>
-            <option value="Backlog">Backlog</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-          </select>
-          <input type="number" min="0" value={estimate} onChange={e => setEstimate(e.target.value)} placeholder="Estimate" />
-          <h4>Subtasks</h4>
-          {subtasks.map((st, idx) => (
-            <div key={idx} className="subtask-item">
-              <input value={st.title} onChange={e => handleSubtaskChange(idx, "title", e.target.value)} placeholder="Subtask Title" />
-              <input type="number" min="0" value={st.estimate} onChange={e => handleSubtaskChange(idx, "estimate", e.target.value)} placeholder="Estimate" />
-              <select value={st.status} onChange={e => handleSubtaskChange(idx, "status", e.target.value)}>
-                <option value="Backlog">Backlog</option>
-                <option value="Unstarted">Unstarted</option>
-                <option value="Started">Started</option>
-                <option value="Completed">Completed</option>
-              </select>
-              <button type="button" onClick={() => handleDeleteSubtask(idx)}>Delete</button>
-            </div>
-          ))}
-          <button type="button" onClick={handleAddSubtask}>Add Subtask</button>
+        <>
+          <h2>Edit Task #{task.displayId}</h2> {/* Muestra el displayId */}
+          <label>
+            Title:
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
+          </label>
+          <label>
+            Description:
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+          </label>
+          <label>
+            Priority:
+            <select value={priority} onChange={(e) => setPriority(e.target.value as Task["priority"])}>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Urgent">Urgent</option>
+            </select>
+          </label>
+          <label>
+            Status:
+            <select value={status} onChange={(e) => setStatus(e.target.value as Task["status"])}>
+              <option value="Backlog">Backlog</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </label>
+          <label>
+            Estimate (hours):
+            <input type="number" value={estimate} onChange={(e) => setEstimate(e.target.value)} />
+          </label>
+
+          <h3>Subtasks</h3>
+          {subtasks.length === 0 ? (
+            <p>No subtasks.</p>
+          ) : (
+            <ul>
+              {subtasks.map((sub, index) => (
+                <li key={index}>
+                  {sub.title} ({sub.estimate}h) - {sub.status}
+                  <select value={sub.status} onChange={(e) => handleSubtaskStatusChange(index, e.target.value as Subtask["status"])}>
+                    <option value="Backlog">Backlog</option>
+                    <option value="Unstarted">Unstarted</option>
+                    <option value="Started">Started</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                  <button onClick={() => handleSubtaskDelete(index)}>Delete</button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="add-subtask">
+            <input type="text" placeholder="New subtask title" value={newSubtaskTitle} onChange={(e) => setNewSubtaskTitle(e.target.value)} />
+            <input type="number" placeholder="Estimate" value={newSubtaskEstimate} onChange={(e) => setNewSubtaskEstimate(e.target.value)} />
+            <button onClick={handleAddSubtask}>Add Subtask</button>
+          </div>
+
           <button onClick={handleSave}>Save</button>
-        </div>
+          <button onClick={() => setEditMode(false)}>Cancel</button>
+        </>
       ) : (
-        <div>
-          <h2>{task.title}</h2>
-          <p><strong>Description:</strong> {task.description}</p>
-          <p><strong>Priority:</strong> {task.priority}</p>
-          <p><strong>Status:</strong> {task.status}</p>
-          <p><strong>Estimate:</strong> {task.estimate} hours</p>
-          <h4>Subtask Estimates:</h4>
-          <ul>
-            <li><strong>Pending:</strong> {pendingSubtaskEstimate} hours</li>
-            <li><strong>In Progress:</strong> {startedSubtaskEstimate} hours</li>
-            <li><strong>Total Subtask Estimate:</strong> {totalSubtaskEstimate} hours</li>
-          </ul>
-          <h4>Subtasks</h4>
-          <ul>
-            {task.subtasks && task.subtasks.map((st, idx) => (
-              <li key={idx}>{st.title} ({st.estimate} hours) - Status: {st.status}</li>
-            ))}
-          </ul>
+        <>
+          <h2>Task Details #{task.displayId}</h2> {/* Muestra el displayId */}
+          <p>
+            <strong>Title:</strong> {task.title}
+          </p>
+          <p>
+            <strong>Description:</strong> {task.description}
+          </p>
+          <p>
+            <strong>Priority:</strong> {task.priority}
+          </p>
+          <p>
+            <strong>Status:</strong> {task.status}
+          </p>
+          {task.estimate && (
+            <p>
+              <strong>Estimate:</strong> {task.estimate} hours
+            </p>
+          )}
+          <p>
+            <strong>Created At:</strong> {new Date(task.createdAt).toLocaleString()}
+          </p>
+          <p>
+            <strong>Last Updated:</strong> {new Date(task.updatedAt).toLocaleString()}
+          </p>
+
+          <h3>Subtasks ({subtaskEstimates.total}h total)</h3>
+          <p>Pending: {subtaskEstimates.pending}h | Started: {subtaskEstimates.started}h</p>
+          {task.subtasks && task.subtasks.length > 0 ? (
+            <ul>
+              {task.subtasks.map((sub, index) => (
+                <li key={index}>
+                  {sub.title} ({sub.estimate}h) - {sub.status}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No subtasks defined.</p>
+          )}
+
           <button onClick={() => setEditMode(true)}>Edit</button>
-          <button onClick={() => onDelete(task.id)}>Delete</button>
-        </div>
+          <button onClick={handleDelete}>Delete</button>
+        </>
       )}
     </div>
   );
