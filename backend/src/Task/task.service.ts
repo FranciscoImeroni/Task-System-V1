@@ -1,27 +1,26 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Task, Subtask, TaskStatus, TaskPriority } from './task.entity'; // Asegúrate de importar la clase Task
+import { Task, Subtask, TaskStatus, TaskPriority } from './task.entity'; 
 import { v4 as uuidv4 } from 'uuid';
-import { InjectRepository } from '@nestjs/typeorm'; // Importa InjectRepository
-import { Repository } from 'typeorm'; // Importa Repository
+import { InjectRepository } from '@nestjs/typeorm'; 
+import { Repository } from 'typeorm'; 
 
 @Injectable()
 export class TaskService {
   constructor(
-    @InjectRepository(Task) // Inyecta el repositorio de la entidad Task
+    @InjectRepository(Task) 
     private taskRepository: Repository<Task>,
   ) {}
 
-  // Actualiza el tipo de 'taskData' para omitir 'displayId'
   async create(taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'displayId'>): Promise<Task> {
     const now = new Date().toISOString();
-    const newTask = this.taskRepository.create({ // Usa .create de TypeORM para crear una nueva instancia
+    const newTask = this.taskRepository.create({ 
       ...taskData,
       id: uuidv4(),
       createdAt: now,
       updatedAt: now,
       subtasks: taskData.subtasks || [],
     });
-    return this.taskRepository.save(newTask); // Guarda la nueva tarea en la base de datos
+    return this.taskRepository.save(newTask); 
   }
 
   async findAllPaginated(page: number, limit: number): Promise<{ data: Task[]; total: number; page: number; limit: number }> {
@@ -34,7 +33,7 @@ export class TaskService {
   }
 
   async findOne(id: string): Promise<Task> {
-    const task = await this.taskRepository.findOne({ where: { id } }); // Busca una tarea por ID
+    const task = await this.taskRepository.findOne({ where: { id } });
     if (!task) {
       throw new NotFoundException('Task not found');
     }
@@ -53,18 +52,16 @@ export class TaskService {
       updatedAt: new Date().toISOString(),
     };
 
-    return this.taskRepository.save(updatedTask); // Guarda los cambios en la base de datos
+    return this.taskRepository.save(updatedTask);
   }
 
   async delete(id: string): Promise<void> {
-    const result = await this.taskRepository.delete(id); // Elimina una tarea por ID
+    const result = await this.taskRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException('Task not found');
     }
   }
 
-  // Las funciones de cálculo de estimaciones pueden permanecer igual,
-  // ya que operan sobre los datos de la tarea una vez obtenidos.
   sumEstimates(tasks: Subtask[], statuses?: Subtask['status'][]): number {
     return tasks.reduce((sum, t) => {
       const subSum = t.subtasks ? this.sumEstimates(t.subtasks, statuses) : 0;
@@ -84,7 +81,7 @@ export class TaskService {
 
     const pending = this.sumEstimates(task.subtasks, pendingStatuses);
     const started = this.sumEstimates(task.subtasks, startedStatuses);
-    const total = this.sumEstimates(task.subtasks); // Suma total sin filtrar por estado
+    const total = this.sumEstimates(task.subtasks); 
 
     return { pending, started, total };
   }

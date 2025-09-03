@@ -1,61 +1,76 @@
 import { TaskService } from './task.service';
-import { Task } from './task.entity';
+import { Task, Subtask, TaskPriority, TaskStatus } from './task.entity'; 
+import { Repository } from 'typeorm';
 
 describe('TaskService', () => {
   let service: TaskService;
+  let mockRepository: Partial<Repository<Task>>;
 
   beforeEach(() => {
-    service = new TaskService();
+    mockRepository = {
+      create: jest.fn().mockImplementation((task) => ({ ...task, id: 'uuid', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), displayId: 1 })),
+      save: jest.fn().mockImplementation((task) => Promise.resolve(task)),
+      find: jest.fn().mockResolvedValue([]),
+      findOne: jest.fn(),
+      delete: jest.fn(),
+    };
+    service = new TaskService(mockRepository as Repository<Task>);
   });
 
-  it('should create a task', () => {
-    const task = service.create({
+  it('should create a task', async () => {
+    const taskData = {
       title: 'Test',
       description: 'Desc',
-      status: 'Backlog',
+      priority: 'Medium' as TaskPriority,
+      status: 'Backlog' as TaskStatus, 
       subtasks: [],
-    });
+      estimate: 5,
+    };
+    const task = await service.create(taskData);
     expect(task.id).toBeDefined();
     expect(task.title).toBe('Test');
     expect(task.status).toBe('Backlog');
-    expect(service.findAll().length).toBe(1);
   });
 
-  it('should update a task', () => {
-    const task = service.create({
+  it('should update a task', async () => {
+    const existingTask = {
+      id: 'uuid',
       title: 'Test',
       description: 'Desc',
-      status: 'Backlog',
+      priority: 'Medium' as TaskPriority, 
+      status: 'Backlog' as TaskStatus, 
       subtasks: [],
-    });
-    const updated = service.update(task.id, { title: 'Updated' });
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      displayId: 1,
+      estimate: 5,
+    };
+    mockRepository.findOne = jest.fn().mockResolvedValue(existingTask);
+    mockRepository.save = jest.fn().mockImplementation((task) => Promise.resolve(task));
+
+    const updated = await service.update(existingTask.id, { title: 'Updated' });
     expect(updated.title).toBe('Updated');
-    expect(updated.updatedAt).not.toBe(task.updatedAt);
+    expect(updated.updatedAt).not.toBe(existingTask.updatedAt);
   });
 
-  it('should delete a task', () => {
-    const task = service.create({
-      title: 'Test',
-      description: 'Desc',
-      status: 'Backlog',
-      subtasks: [],
-    });
-    service.delete(task.id);
-    expect(service.findAll().length).toBe(0);
+  it('should delete a task', async () => {
+    mockRepository.delete = jest.fn().mockResolvedValue({ affected: 1 });
+    await service.delete('uuid');
+    expect(mockRepository.delete).toHaveBeenCalledWith('uuid');
   });
 
   it('should calculate estimates for nested subtasks', () => {
-    const subtasks: Task[] = [
-      { id: '1', title: 'A', description: '', status: 'Backlog', createdAt: '', updatedAt: '', estimate: 2, subtasks: [] },
-      { id: '2', title: 'B', description: '', status: 'Started', createdAt: '', updatedAt: '', estimate: 3, subtasks: [
-        { id: '3', title: 'B1', description: '', status: 'Backlog', createdAt: '', updatedAt: '', estimate: 1, subtasks: [] }
+    const subtasks: Subtask[] = [
+      { title: 'A', estimate: 2, status: 'Backlog' },
+      { title: 'B', estimate: 3, status: 'Started', subtasks: [
+        { title: 'B1', estimate: 1, status: 'Backlog' }
       ] },
     ];
     const pending = service.sumEstimates(subtasks, ['Backlog', 'Unstarted']);
     const started = service.sumEstimates(subtasks, ['Started']);
     const total = service.sumEstimates(subtasks);
-    expect(pending).toBe(3); // 2 (A) + 1 (B1)
-    expect(started).toBe(3); // 3 (B)
-    expect(total).toBe(6); // 2 (A) + 3 (B) + 1 (B1)
+    expect(pending).toBe(3);
+    expect(started).toBe(3);
+    expect(total).toBe(6);
   });
 });
