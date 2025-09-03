@@ -58,11 +58,6 @@ To run the tests:
 
 3. The tests will connect to the database and run various API endpoint checks. Make sure the database credentials in your environment variables match those expected by the tests.
 
-4. If you want to run the tests with explicit environment variables, you can run:
-
-    ```powershell
-    $env:DATABASE_HOST='localhost'; $env:DATABASE_PORT='5432'; $env:DATABASE_USER='postgres'; $env:DATABASE_PASSWORD='postgrespassword'; $env:DATABASE_NAME='taskdb'; npm run test:e2e
-    ```
 
 ## Stopping Services
 
