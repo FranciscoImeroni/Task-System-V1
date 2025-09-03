@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { Task } from "../types";
 import type { Subtask } from "../types";
-import "./TaskDetails.css"; 
+import "./TaskDetails.css";
 
 interface TaskDetailsProps {
   task: Task;
@@ -17,7 +17,38 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onUpdate, onDelete, onB
   const [priority, setPriority] = useState(task.priority);
   const [status, setStatus] = useState(task.status);
   const [estimate, setEstimate] = useState(task.estimate ? String(task.estimate) : "");
-  const [subtasks, setSubtasks] = useState<Subtask[]>(task.subtasks || []);
+  const [subtasks, setSubtasks] = useState<Subtask[]>(
+    task.subtasks?.map(st => ({ ...st, status: st.status || "Backlog" })) || []
+  );
+  const [pendingSubtaskEstimate, setPendingSubtaskEstimate] = useState(0);
+  const [startedSubtaskEstimate, setStartedSubtaskEstimate] = useState(0);
+  const [totalSubtaskEstimate, setTotalSubtaskEstimate] = useState(0);
+
+  const API_BASE_URL = "http://localhost:3000";
+
+  const fetchSubtaskEstimates = async () => {
+    if (!task || !task.id) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/tasks/${task.id}/estimates`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setPendingSubtaskEstimate(data.pending);
+      setStartedSubtaskEstimate(data.started);
+      setTotalSubtaskEstimate(data.total);
+    } catch (error) {
+      console.error("Error fetching subtask estimates:", error);
+      setPendingSubtaskEstimate(0);
+      setStartedSubtaskEstimate(0);
+      setTotalSubtaskEstimate(0);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubtaskEstimates(); 
+  }, [task.id]); 
 
   const handleSave = () => {
     onUpdate({
@@ -31,12 +62,14 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onUpdate, onDelete, onB
       subtasks,
     });
     setEditMode(false);
+    fetchSubtaskEstimates();
   };
 
   const handleAddSubtask = () => {
     const newSubtask: Subtask = {
       title: "",
       estimate: 0,
+      status: "Backlog", 
     };
     setSubtasks([...subtasks, newSubtask]);
   };
@@ -46,6 +79,9 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onUpdate, onDelete, onB
       if (i === idx) {
         if (field === "estimate") {
           return { ...st, [field]: Number(value) };
+        }
+        if (field === "status") {
+          return { ...st, [field]: value as Subtask["status"] };
         }
         return { ...st, [field]: value as string };
       }
@@ -79,9 +115,15 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onUpdate, onDelete, onB
           <input type="number" min="0" value={estimate} onChange={e => setEstimate(e.target.value)} placeholder="Estimate" />
           <h4>Subtasks</h4>
           {subtasks.map((st, idx) => (
-            <div key={idx} className="subtask-item"> {/* Added class for styling */}
+            <div key={idx} className="subtask-item">
               <input value={st.title} onChange={e => handleSubtaskChange(idx, "title", e.target.value)} placeholder="Subtask Title" />
               <input type="number" min="0" value={st.estimate} onChange={e => handleSubtaskChange(idx, "estimate", e.target.value)} placeholder="Estimate" />
+              <select value={st.status} onChange={e => handleSubtaskChange(idx, "status", e.target.value)}>
+                <option value="Backlog">Backlog</option>
+                <option value="Unstarted">Unstarted</option>
+                <option value="Started">Started</option>
+                <option value="Completed">Completed</option>
+              </select>
               <button type="button" onClick={() => handleDeleteSubtask(idx)}>Delete</button>
             </div>
           ))}
@@ -91,14 +133,20 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onUpdate, onDelete, onB
       ) : (
         <div>
           <h2>{task.title}</h2>
-          <p><strong>Description:</strong> {task.description}</p> 
+          <p><strong>Description:</strong> {task.description}</p>
           <p><strong>Priority:</strong> {task.priority}</p>
           <p><strong>Status:</strong> {task.status}</p>
-          <p><strong>Estimate:</strong> {task.estimate} hours</p> 
+          <p><strong>Estimate:</strong> {task.estimate} hours</p>
+          <h4>Subtask Estimates:</h4>
+          <ul>
+            <li><strong>Pending:</strong> {pendingSubtaskEstimate} hours</li>
+            <li><strong>In Progress:</strong> {startedSubtaskEstimate} hours</li>
+            <li><strong>Total Subtask Estimate:</strong> {totalSubtaskEstimate} hours</li>
+          </ul>
           <h4>Subtasks</h4>
           <ul>
             {task.subtasks && task.subtasks.map((st, idx) => (
-              <li key={idx}>{st.title} ({st.estimate} hours)</li> 
+              <li key={idx}>{st.title} ({st.estimate} hours) - Status: {st.status}</li>
             ))}
           </ul>
           <button onClick={() => setEditMode(true)}>Edit</button>
