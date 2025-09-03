@@ -9,14 +9,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { TaskService } from './task.service';
-import { Task } from './task.entity'; 
+import { Task } from './task.entity';
 
 @Controller('tasks')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
-  @Post()
-  async create(@Body() task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Promise<Task> {
+  @Post() 
+  async create(@Body() task: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'displayId'>): Promise<Task> {
     return await this.taskService.create(task);
   }
 

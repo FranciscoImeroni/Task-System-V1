@@ -11,7 +11,8 @@ export class TaskService {
     private taskRepository: Repository<Task>,
   ) {}
 
-  async create(taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Promise<Task> {
+  // Actualiza el tipo de 'taskData' para omitir 'displayId'
+  async create(taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'displayId'>): Promise<Task> {
     const now = new Date().toISOString();
     const newTask = this.taskRepository.create({ // Usa .create de TypeORM para crear una nueva instancia
       ...taskData,

@@ -6,42 +6,6 @@ import TaskForm from "./TaskForm/TaskForm";
 import "./App.css";
 import type { Task } from "./types"; 
 
-// Elimina los datos mock initialTasks
-// const initialTasks: Task[] = [
-//   {
-//     id: "1",
-//     title: "Design homepage",
-//     description: "Design the main homepage layout and hero section.",
-//     status: "In Progress",
-//     priority: "High",
-//     estimate: 4,
-//     createdAt: "2024-06-01T00:00:00.000Z",
-//     updatedAt: "2024-06-01T00:00:00.000Z",
-//     subtasks: [],
-//   },
-//   {
-//     id: "2",
-//     title: "Setup backend API",
-//     description: "Initialize backend project and create basic endpoints.",
-//     status: "Backlog",
-//     priority: "Medium",
-//     estimate: 6,
-//     createdAt: "2024-06-02T00:00:00.000Z",
-//     updatedAt: "2024-06-02T00:00:00.000Z",
-//     subtasks: [],
-//   },
-//   {
-//     id: "3",
-//     title: "Write documentation",
-//     description: "Document the API and frontend usage.",
-//     status: "Completed",
-//     priority: "Low",
-//     estimate: 2,
-//     createdAt: "2024-06-03T00:00:00.000Z",
-//     updatedAt: "2024-06-03T00:00:00.000Z",
-//     subtasks: [],
-//   },
-// ];
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);

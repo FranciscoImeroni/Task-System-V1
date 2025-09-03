@@ -7,6 +7,7 @@ export interface Subtask {
 
 export interface Task {
   id: string;
+  displayId: number; // Añade esta línea
   title: string;
   description: string;
   priority: "Low" | "Medium" | "High" | "Urgent";

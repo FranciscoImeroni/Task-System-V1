@@ -1,4 +1,4 @@
-import { Entity, PrimaryColumn, Column } from 'typeorm';
+import { Entity, PrimaryColumn, Column, Generated } from 'typeorm'; // Importa 'Generated'
 
 export type TaskStatus = "Backlog" | "In Progress" | "Completed";
 export type TaskPriority = "Low" | "Medium" | "High" | "Urgent";
@@ -14,6 +14,10 @@ export interface Subtask {
 export class Task {
   @PrimaryColumn() 
   id: string;
+
+  @Column()
+  @Generated('increment') // Añade esta línea para generar un número auto-incrementable
+  displayId: number; // Nuevo campo para el ID numérico a mostrar
 
   @Column()
   title: string;
