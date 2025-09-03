@@ -42,6 +42,28 @@ Make sure you have the following installed on your system:
     *   **Frontend:** Open your web browser and go to `http://localhost:5173`
     *   **Backend API:** The backend API will be available at `http://localhost:3000`
 
+## Running Tests
+
+The backend includes end-to-end (E2E) tests to verify the API functionality.
+
+To run the tests:
+
+1. Ensure your PostgreSQL database is running and accessible with the correct environment variables set (matching those in your `.env` or Docker Compose).
+
+2. From the `backend` directory, run the following command to execute the E2E tests:
+
+    ```bash
+    npm run test:e2e
+    ```
+
+3. The tests will connect to the database and run various API endpoint checks. Make sure the database credentials in your environment variables match those expected by the tests.
+
+4. If you want to run the tests with explicit environment variables, you can run:
+
+    ```powershell
+    $env:DATABASE_HOST='localhost'; $env:DATABASE_PORT='5432'; $env:DATABASE_USER='postgres'; $env:DATABASE_PASSWORD='postgrespassword'; $env:DATABASE_NAME='taskdb'; npm run test:e2e
+    ```
+
 ## Stopping Services
 
 To stop and remove the containers, networks, and volumes created by `docker compose`:

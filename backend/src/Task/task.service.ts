@@ -24,8 +24,13 @@ export class TaskService {
     return this.taskRepository.save(newTask); // Guarda la nueva tarea en la base de datos
   }
 
-  async findAll(): Promise<Task[]> {
-    return this.taskRepository.find(); // Encuentra todas las tareas en la base de datos
+  async findAllPaginated(page: number, limit: number): Promise<{ data: Task[]; total: number; page: number; limit: number }> {
+    const [data, total] = await this.taskRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+    return { data, total, page, limit };
   }
 
   async findOne(id: string): Promise<Task> {

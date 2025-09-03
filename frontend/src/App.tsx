@@ -9,6 +9,9 @@ import type { Task } from "./types";
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<string>("");
@@ -17,22 +20,24 @@ function App() {
 
   const API_BASE_URL = "http://localhost:3000";
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (pageNumber = 1) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/tasks`);
+      const response = await fetch(`${API_BASE_URL}/tasks?page=${pageNumber}&limit=${limit}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data: Task[] = await response.json();
-      setTasks(data);
+      const data: { data: Task[]; total: number } = await response.json();
+      setTasks(data.data);
+      setTotal(data.total);
+      setPage(pageNumber);
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }
   };
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    fetchTasks(page);
+  }, [page]);
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,6 +116,11 @@ function App() {
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > Math.ceil(total / limit)) return;
+    setPage(newPage);
+  };
+
   return (
     <div className="app">
       <h1>Task Management System</h1>
@@ -133,6 +143,10 @@ function App() {
               <TaskList
                 tasks={tasks}
                 onDetails={(id) => navigate(`/task/${id}`)}
+                page={page}
+                total={total}
+                limit={limit}
+                onPageChange={handlePageChange}
               />
             </>
           }

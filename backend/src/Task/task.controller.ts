@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { Task } from './task.entity';
+import { Query } from '@nestjs/common';
 
 @Controller('tasks')
 export class TaskController {
@@ -21,8 +22,13 @@ export class TaskController {
   }
 
   @Get()
-  async findAll(): Promise<Task[]> {
-    return await this.taskService.findAll();
+  async findAll(
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+  ): Promise<{ data: Task[]; total: number; page: number; limit: number }> {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = Math.min(parseInt(limit, 10), 100); // max 100 per page
+    return await this.taskService.findAllPaginated(pageNumber, limitNumber);
   }
 
   @Get(':id')
