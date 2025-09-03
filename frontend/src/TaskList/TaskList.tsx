@@ -1,5 +1,6 @@
 import React from "react";
-import type { Task } from "./types";
+import type { Task } from "../types";
+import "./TaskList.css"; // Importa el archivo CSS
 
 interface TaskListProps {
   tasks: Task[];
@@ -7,12 +8,10 @@ interface TaskListProps {
 }
 
 const TaskList: React.FC<TaskListProps> = ({ tasks, onDetails }) => {
-
-
   return (
-    <div style={{ padding: "2rem" }}>
+    <div className="task-list-container"> 
       <h2>Tasks</h2>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <table className="task-table"> 
         <thead>
           <tr>
             <th>ID</th>
@@ -26,7 +25,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onDetails }) => {
         </thead>
         <tbody>
           {tasks.map((task) => (
-            <tr key={task.id} style={{ borderBottom: "1px solid #eee" }}>
+            <tr key={task.id}> 
               <td>{task.id}</td>
               <td>{task.title}</td>
               <td>{task.status}</td>

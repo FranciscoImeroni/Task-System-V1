@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react"; // Importa useEffect
+import React, { useState, useEffect } from "react"; 
 import { Routes, Route, useNavigate } from "react-router-dom";
-import TaskDetails from "./TaskDetails";
-import TaskList from "./TaskList";
+import TaskDetails from "./TaskDetails/TaskDetails";
+import TaskList from "./TaskList/TaskList";
+import TaskForm from "./TaskForm/TaskForm"; 
 import "./App.css";
-import type { Task } from "./types"; // Asegúrate de que Subtask esté importado si se usa en Task
+import type { Task } from "./types"; 
 
 // Elimina los datos mock initialTasks
 // const initialTasks: Task[] = [
@@ -43,14 +44,14 @@ import type { Task } from "./types"; // Asegúrate de que Subtask esté importad
 // ];
 
 function App() {
-  const [tasks, setTasks] = useState<Task[]>([]); 
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<string>("");
   const [estimate, setEstimate] = useState<string>("");
   const navigate = useNavigate();
 
-  const API_BASE_URL = "http://localhost:3000"; 
+  const API_BASE_URL = "http://localhost:3000";
 
   const fetchTasks = async () => {
     try {
@@ -77,9 +78,9 @@ function App() {
       title,
       description,
       priority: priority as Task["priority"],
-      status: "Backlog", 
+      status: "Backlog",
       estimate: estimate ? Number(estimate) : undefined,
-      subtasks: [], 
+      subtasks: [],
     };
 
     try {
@@ -140,7 +141,7 @@ function App() {
       }
 
       setTasks((prevTasks) => prevTasks.filter((t) => t.id !== id));
-      navigate("/"); 
+      navigate("/");
     } catch (error) {
       console.error("Error deleting task:", error);
     }
@@ -154,37 +155,17 @@ function App() {
           path="/"
           element={
             <>
-              <form onSubmit={handleCreateTask} className="task-form">
-                <input
-                  type="text"
-                  placeholder="Task Title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
-                <textarea
-                  placeholder="Description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-                <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value)}
-                >
-                  <option value="">Select Priority</option>
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                  <option value="Urgent">Urgent</option>
-                </select>
-                <input
-                  type="number"
-                  placeholder="Estimate (hours)"
-                  value={estimate}
-                  onChange={(e) => setEstimate(e.target.value)}
-                />
-                <button type="submit">Add Task</button>
-              </form>
+              <TaskForm 
+                title={title}
+                setTitle={setTitle}
+                description={description}
+                setDescription={setDescription}
+                priority={priority}
+                setPriority={setPriority}
+                estimate={estimate}
+                setEstimate={setEstimate}
+                handleCreateTask={handleCreateTask}
+              />
               <TaskList
                 tasks={tasks}
                 onDetails={(id) => navigate(`/task/${id}`)}

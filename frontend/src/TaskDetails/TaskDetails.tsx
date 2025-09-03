@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import type { Task } from "./types"; 
-import type { Subtask } from "./types"; 
+import type { Task } from "../types";
+import type { Subtask } from "../types";
+import "./TaskDetails.css"; 
 
 interface TaskDetailsProps {
   task: Task;
@@ -27,15 +28,15 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onUpdate, onDelete, onB
       status,
       estimate: estimate ? Number(estimate) : undefined,
       updatedAt: new Date().toISOString(),
-      subtasks, 
+      subtasks,
     });
     setEditMode(false);
   };
 
   const handleAddSubtask = () => {
     const newSubtask: Subtask = {
-      title: "", 
-      estimate: 0, 
+      title: "",
+      estimate: 0,
     };
     setSubtasks([...subtasks, newSubtask]);
   };
@@ -46,7 +47,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onUpdate, onDelete, onB
         if (field === "estimate") {
           return { ...st, [field]: Number(value) };
         }
-        return { ...st, [field]: value as string }; 
+        return { ...st, [field]: value as string };
       }
       return st;
     }));
@@ -78,7 +79,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onUpdate, onDelete, onB
           <input type="number" min="0" value={estimate} onChange={e => setEstimate(e.target.value)} placeholder="Estimate" />
           <h4>Subtasks</h4>
           {subtasks.map((st, idx) => (
-            <div key={idx}>
+            <div key={idx} className="subtask-item"> {/* Added class for styling */}
               <input value={st.title} onChange={e => handleSubtaskChange(idx, "title", e.target.value)} placeholder="Subtask Title" />
               <input type="number" min="0" value={st.estimate} onChange={e => handleSubtaskChange(idx, "estimate", e.target.value)} placeholder="Estimate" />
               <button type="button" onClick={() => handleDeleteSubtask(idx)}>Delete</button>
@@ -90,14 +91,14 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({ task, onUpdate, onDelete, onB
       ) : (
         <div>
           <h2>{task.title}</h2>
-          <p>{task.description}</p>
-          <p>Priority: {task.priority}</p>
-          <p>Status: {task.status}</p>
-          <p>Estimate: {task.estimate}</p>
+          <p><strong>Description:</strong> {task.description}</p> 
+          <p><strong>Priority:</strong> {task.priority}</p>
+          <p><strong>Status:</strong> {task.status}</p>
+          <p><strong>Estimate:</strong> {task.estimate} hours</p> 
           <h4>Subtasks</h4>
           <ul>
             {task.subtasks && task.subtasks.map((st, idx) => (
-              <li key={idx}>{st.title} ({st.estimate})</li>
+              <li key={idx}>{st.title} ({st.estimate} hours)</li> 
             ))}
           </ul>
           <button onClick={() => setEditMode(true)}>Edit</button>
